@@ -1,0 +1,27 @@
+FROM node:18-alpine
+
+# npx ist bereits in node:18-alpine enthalten
+
+# Erstelle Arbeitsverzeichnis
+WORKDIR /app
+
+# Kopiere package.json falls vorhanden
+COPY package*.json ./
+
+# Installiere Abhängigkeiten
+RUN npm install
+
+# Installiere den Memory Graph Server
+RUN npx @itseasy21/mcp-knowledge-graph --version
+
+# Erstelle Verzeichnis für Memories
+RUN mkdir -p /app/memories
+
+# Setze Umgebungsvariablen
+ENV MEMORY_FILE_PATH=/app/memories/global-memories.jsonl
+
+# Exponiere Port (falls benötigt)
+EXPOSE 3000
+
+# Starte den Memory Graph Server im stdio-Modus
+CMD ["npx", "@itseasy21/mcp-knowledge-graph", "--stdio"] 

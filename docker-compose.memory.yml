@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  memory-graph-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.memory
+    container_name: global-memory-graph
+    restart: unless-stopped
+    volumes:
+      # Persistente Speicherung für globale Memories
+      - /Users/markosimic/.cursor/memories:/app/memories
+      # Backup Volume für zusätzliche Sicherheit
+      - memory-backup:/app/backup
+    environment:
+      - MEMORY_FILE_PATH=/app/memories/global-memories.jsonl
+      - NODE_ENV=production
+    networks:
+      - memory-network
+    healthcheck:
+      test: ["CMD", "npx", "@itseasy21/mcp-knowledge-graph", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Backup Service für automatische Backups
+  memory-backup:
+    image: alpine:latest
+    container_name: memory-backup-service
+    restart: unless-stopped
+    volumes:
+      - /Users/markosimic/.cursor/memories:/source
+      - memory-backup:/backup
+    command: |
+      sh -c "
+        while true; do
+          cp /source/global-memories.jsonl /backup/global-memories-$$(date +%Y%m%d-%H%M%S).jsonl
+          sleep 3600
+        done
+      "
+    networks:
+      - memory-network
+
+volumes:
+  memory-backup:
+    driver: local
+
+networks:
+  memory-network:
+    driver: bridge 
